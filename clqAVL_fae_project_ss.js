@@ -8,27 +8,38 @@
  */
  
 /*
- * 'AVL Support Person' permission checking
+ * 'AVL Support Person' project permission checking
  */
 function clqAVLfae_project_BeforeLoadSS(type, form)
 {
 	var context = nlapiGetContext();
 	//just trigger and block on user interface operation.
-	if ((type.toLowerCase() == 'view' || 'edit' || 'xedit') && context.getExecutionContext == 'userinterface')
+	if ((type.toLowerCase() == 'view' || 'edit' || 'xedit') && context.getExecutionContext() == 'userinterface')
 	{
-		//check role first before permission checking.
-		var curUser = nlapiGetUser();
-		//var curRole = nlapiGetRole();	//solution: role internalId need to mapping to role name in configuration file.
+		var curUser = context.getUser();	//nlapiGetUser();
+		//var curRole = nlapiGetRole();	//one of solution: role internalId need to mapping to role name in configuration file.
+		//'AVL Support Person' get internalid of custom role like 'customrole1012'.
 		var curRoleName = context.getRoleId();
-		if (curRoleName == 'AVL Support Person')
+		var restrictRoleId = nlapiGetContext().getSetting('SCRIPT', 'custscript_clqfae_project_restrictroleid');
+		var restrictRoleIdArr = Boolean(restrictRoleId) ? restrictRoleId.split(',') : null;
+		//Setting want to restrict roles and current role is include restrict list.
+		if (Boolean(restrictRoleIdArr) && restrictRoleIdArr.indexOf(curRoleName) != -1)
 		{
+			var permissionMsg = '[CLQ] Permission Violation: this customer, prospect or lead cannot be accessed by your group.';
 			var faeOwnerGroupId = nlapiGetFieldValue('custentity_clqfae_ownergroup');
 			if (Boolean(faeOwnerGroupId))
 			{
 				var faeOwnerIds = nlapiLookupField('customrecord_clqfae_group', faeOwnerGroupId, 'custrecord_clqfaegroup_employees');
-				if (faeOwnerIds.indexOf(curUser) == -1){
-					throw '[CLQ] Permission Violation: this customer, prospect or lead cannot be accessed by your group.';
-				}
+				//nobody contains in this FAE Owner Group
+				if (!Boolean(faeOwnerIds))
+					throw permissionMsg;
+				var faeOwnerIds_Arr = faeOwnerIds.split(',');
+				//current user doesn't contain in FAE Owner Group, be careful on the string compare
+				if (faeOwnerIds_Arr.indexOf(curUser.toString()) == -1)
+					throw permissionMsg;
+			}else	//lock the unassigned situation.
+			{
+				throw permissionMsg;
 			}
 		}
 	}
