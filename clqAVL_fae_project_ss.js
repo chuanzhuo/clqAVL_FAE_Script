@@ -4,17 +4,22 @@
  * 	Primary working for summary 'FAE Owner Group' to Customer's 'FAE Owner Groups'
  * @author COLOQI Limited
  * @since  2010.2
- * @version Created 20110714 Zeng Chuan Zhuo
+ * @version Created 20110714 Zeng, Chuan Zhuo
  */
  
+/*
+ * 'AVL Support Person' permission checking
+ */
 function clqAVLfae_project_BeforeLoadSS(type, form)
-{ 
-	if (type.toLowerCase() == 'view' || 'edit' || 'xedit')
+{
+	var context = nlapiGetContext();
+	//just trigger and block on user interface operation.
+	if ((type.toLowerCase() == 'view' || 'edit' || 'xedit') && context.getExecutionContext == 'userinterface')
 	{
 		//check role first before permission checking.
 		var curUser = nlapiGetUser();
 		//var curRole = nlapiGetRole();	//solution: role internalId need to mapping to role name in configuration file.
-		var curRoleName = nlapiGetContext().getRoleId();
+		var curRoleName = context.getRoleId();
 		if (curRoleName == 'AVL Support Person')
 		{
 			var faeOwnerGroupId = nlapiGetFieldValue('custentity_clqfae_ownergroup');
@@ -47,7 +52,7 @@ function clqAVLfae_project_AfterSubmitSS(type)
 		var origCustomerOwnerGroups_Str = nlapiLookupField('customer', customerId, 'custentity_clqfae_customerownergroups');
 		
 		var searchRes = nlapiSearchRecord('customer', null, 
-											[new nlobjSearchFilter('internalid', null, 'anyof ', customerId)], 
+											[new nlobjSearchFilter('internalid', null, 'anyof', customerId)], 
 										  	[new nlobjSearchColumn('companyname'), 
 										  	 new nlobjSearchColumn('custentity_clqfae_ownergroup', 'job')
 										  	 ]);
@@ -59,7 +64,7 @@ function clqAVLfae_project_AfterSubmitSS(type)
 		{
 			//collection for totally related owner group
 			var groupsArr = [];
-			for (var i = 0; i < searchresults.length; i++ )
+			for (var i = 0; i < searchRes.length; i++ )
 			{
 				var tempGroup = searchRes[i].getValue('custentity_clqfae_ownergroup', 'job');
 				//project1 ownergroup has value and value have not been collected.
@@ -67,8 +72,20 @@ function clqAVLfae_project_AfterSubmitSS(type)
 					groupsArr.push(tempGroup);
 				}
 			}
-			//submit/refresh customer owner groups field
-			nlapiSubmitField('customer', customerId, 'custentity_clqfae_customerownergroups', groupsArr);
+			//submit/refresh customer owner groups field, multi-select is not support by Xedit.
+			//nlapiSubmitField('customer', customerId, 'custentity_clqfae_customerownergroups', groupsArr.join(String.fromCharCode(5)));
+			var customerRec = nlapiLoadRecord('customer', customerId);
+			customerRec.setFieldValues('custentity_clqfae_customerownergroups', groupsArr);
+			//ignoreMandatoryFields = true.
+			try{
+				var id = nlapiSubmitRecord(customerRec, true, true);
+			}catch(ex){
+				var detailMsg=ex;
+				if (ex instanceof nlobjError){
+					detailMsg = ex.getDetails();
+				}
+				throw '[ERR] Fail to sychronize "Project Owner Group" to customer, Error message: ' + detailMsg + '\rPlease try redit project record.';
+			}
 		}
 	}
 	return true;
