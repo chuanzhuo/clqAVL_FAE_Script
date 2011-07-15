@@ -56,7 +56,11 @@ function clqAVLfae_project_AfterSubmitSS(type)
 { 
 	if (type.toLowerCase() == 'create' || 'edit' || 'xedit')
 	{
-		var customerId = nlapiGetFieldValue('parent');
+		//xedit can't use nlapiGetFieldValue 201107151543
+		if (type.toLowerCase() == 'xedit')
+			var customerId = nlapiLoadRecord('job', nlapiGetNewRecord().getFieldValue('id')).getFieldValue('parent');
+		else
+			var customerId = nlapiGetFieldValue('parent');
 		//advance project should not including in this customisation
 		if (!Boolean(customerId)) return true;
 		//don't worry, prospect can also be including in such code.
