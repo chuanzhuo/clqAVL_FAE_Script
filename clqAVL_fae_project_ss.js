@@ -14,7 +14,7 @@ function clqAVLfae_project_BeforeLoadSS(type, form)
 {
 	var context = nlapiGetContext();
 	//just trigger and block on user interface operation.
-	if ((type.toLowerCase() == 'view' || 'edit' || 'xedit') && context.getExecutionContext() == 'userinterface')
+	if ((type.toLowerCase() == 'view' || type.toLowerCase() == 'edit' || type.toLowerCase() == 'xedit') && context.getExecutionContext() == 'userinterface')
 	{
 		var curUser = context.getUser();	//nlapiGetUser();
 		//var curRole = nlapiGetRole();	//one of solution: role internalId need to mapping to role name in configuration file.
@@ -54,7 +54,7 @@ function clqAVLfae_project_BeforeLoadSS(type, form)
  */
 function clqAVLfae_project_AfterSubmitSS(type)
 { 
-	if (type.toLowerCase() == 'create' || 'edit' || 'xedit')
+	if (type.toLowerCase() == 'create' || type.toLowerCase() == 'edit' || type.toLowerCase() == 'xedit')
 	{
 		//xedit can't use nlapiGetFieldValue 201107151543
 		if (type.toLowerCase() == 'xedit')

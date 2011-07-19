@@ -14,7 +14,7 @@ function clqAVLfae_customer_BeforeLoadSS(type, form)
 {
 	var context = nlapiGetContext();
 	//just trigger and block on user interface operation.
-	if ((type.toLowerCase() == 'view' || 'edit' || 'xedit') && context.getExecutionContext() == 'userinterface')
+	if ((type.toLowerCase() == 'view' || type.toLowerCase() == 'edit' || type.toLowerCase() == 'xedit') && context.getExecutionContext() == 'userinterface')
 	{
 		//nlapiGetUser() return null in custom role: AVL Support Person, 
 		var curUser = context.getUser();	//nlapiGetUser();
